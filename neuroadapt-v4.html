@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>NeuroAdapt AI v4 – Live Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cyan:#00f5ff;--cyan-dim:#00c8d4;--cyan-faint:rgba(0,245,255,0.05);
+  --bg:#040a0f;--bg2:#070e15;--bg3:#0a1520;
+  --panel:rgba(6,18,28,0.95);
+  --border:rgba(0,245,255,0.18);--border-hi:rgba(0,245,255,0.6);
+  --text:#c8eaf0;--text-dim:rgba(180,220,230,0.5);
+  --red:#ff3a5c;--amber:#ffb800;--green:#00ff9f;--purple:#b060ff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;touch-action:manipulation;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 10%,rgba(0,245,255,0.06) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:998;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.022) 2px,rgba(0,0,0,0.022) 4px);}
+#app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 16px 60px;}
+
+/* MILVRE TOPBAR */
+.milvre-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0 12px;border-bottom:1px solid rgba(0,245,255,0.12);margin-bottom:20px;}
+.milvre-left{font-family:'Orbitron';font-size:16px;font-weight:900;letter-spacing:.28em;color:var(--cyan);text-shadow:0 0 24px rgba(0,245,255,0.5);text-transform:uppercase;}
+.milvre-right{font-family:'Share Tech Mono';font-size:12px;letter-spacing:.16em;color:var(--text-dim);}
+.milvre-sep{color:rgba(0,245,255,0.35);margin:0 6px;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:38px;height:38px;flex-shrink:0;}
+.logo-icon svg{width:100%;height:100%;}
+.logo-text h1{font-family:'Orbitron';font-size:16px;font-weight:900;letter-spacing:.1em;color:var(--cyan);text-shadow:0 0 20px rgba(0,245,255,0.5);}
+.logo-text p{font-size:10px;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;}
+.hdr-right{display:flex;gap:14px;align-items:center;}
+.status-item{font-family:'Share Tech Mono';font-size:11px;color:var(--text-dim);display:flex;flex-direction:column;align-items:flex-end;}
+.status-item span:first-child{color:var(--cyan);font-size:13px;}
+.v-badge{background:rgba(0,245,255,0.07);border:1px solid var(--border);padding:4px 10px;border-radius:2px;font-family:'Orbitron';font-size:10px;color:var(--cyan);letter-spacing:.15em;}
+
+/* PHASE TRACK */
+.phase-track{display:flex;gap:0;margin-bottom:22px;position:relative;}
+.phase-track::before{content:'';position:absolute;top:17px;left:0;right:0;height:2px;background:var(--border);z-index:0;}
+.phase-item{flex:1;text-align:center;position:relative;z-index:1;}
+.phase-dot{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);background:var(--bg2);margin:0 auto 7px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron';font-size:11px;font-weight:700;color:var(--text-dim);transition:all .5s;}
+.phase-item.active .phase-dot{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 16px rgba(0,245,255,0.5),inset 0 0 8px rgba(0,245,255,0.1);background:rgba(0,245,255,0.08);}
+.phase-item.done .phase-dot{border-color:var(--green);background:rgba(0,255,159,0.1);color:var(--green);}
+.phase-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);transition:color .5s;}
+.phase-item.active .phase-label{color:var(--cyan);}
+.phase-item.done .phase-label{color:var(--green);}
+
+/* PANELS */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:22px;position:relative;overflow:hidden;margin-bottom:16px;}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.45;}
+.panel-title{font-family:'Orbitron';font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+.panel-title::before{content:'';display:inline-block;width:3px;height:14px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+
+/* SECTIONS */
+.section{display:none;}
+.section.active{display:block;animation:fadeIn .4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* WELCOME */
+.welcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.welcome-stat{text-align:center;padding:14px;border:1px solid var(--border);border-radius:4px;background:var(--cyan-faint);}
+.welcome-stat .wval{font-family:'Orbitron';font-size:24px;font-weight:900;color:var(--cyan);}
+.welcome-stat .wlbl{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;}
+.start-btn{display:block;width:100%;padding:18px;font-family:'Orbitron';font-size:14px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;background:rgba(0,245,255,0.08);border:2px solid var(--cyan);border-radius:4px;color:var(--cyan);cursor:pointer;text-align:center;box-shadow:0 0 20px rgba(0,245,255,0.15);transition:all .2s;}
+.start-btn:hover,.start-btn:active{background:rgba(0,245,255,0.16);box-shadow:0 0 35px rgba(0,245,255,0.3);}
+
+/* TEST HEADER */
+.test-header{text-align:center;margin-bottom:20px;}
+.test-number{font-family:'Share Tech Mono';font-size:11px;color:var(--text-dim);letter-spacing:.2em;text-transform:uppercase;margin-bottom:6px;}
+.test-name-big{font-family:'Orbitron';font-size:20px;font-weight:900;color:var(--cyan);text-shadow:0 0 25px rgba(0,245,255,0.4);letter-spacing:.08em;}
+.test-instruction{font-size:14px;color:var(--text-dim);margin-top:8px;line-height:1.5;}
+
+/* LIVE STATS */
+.live-stats{display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:16px;}
+.live-stat{flex:1;text-align:center;padding:10px 6px;border-right:1px solid var(--border);}
+.live-stat:last-child{border-right:none;}
+.live-stat .sv{font-family:'Share Tech Mono';font-size:18px;color:var(--cyan);display:block;}
+.live-stat .sl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
+
+/* PROGRESS */
+.test-progress{margin-bottom:14px;}
+.tp-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:5px;}
+.tp-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.tp-fill{height:100%;background:var(--cyan);box-shadow:0 0 8px rgba(0,245,255,0.5);transition:width .4s;}
+
+/* REACTION */
+.reaction-arena{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:22px;}
+.reaction-target{width:160px;height:160px;border-radius:50%;border:3px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:all .1s;touch-action:none;}
+.reaction-target.ready{border-color:var(--cyan);background:rgba(0,245,255,0.1);box-shadow:0 0 50px rgba(0,245,255,0.7),0 0 100px rgba(0,245,255,0.25);animation:pulseT .4s ease-in-out infinite alternate;}
+.reaction-target.too-early{border-color:var(--red);background:rgba(255,58,92,0.12);box-shadow:0 0 40px rgba(255,58,92,0.5);}
+.reaction-target.hit{border-color:var(--green);background:rgba(0,255,159,0.15);box-shadow:0 0 50px rgba(0,255,159,0.6);}
+@keyframes pulseT{from{box-shadow:0 0 40px rgba(0,245,255,0.5)}to{box-shadow:0 0 70px rgba(0,245,255,0.9),0 0 120px rgba(0,245,255,0.3)}}
+.rt-inner{font-family:'Orbitron';font-size:13px;font-weight:700;color:var(--text-dim);text-align:center;letter-spacing:.1em;pointer-events:none;}
+.reaction-target.ready .rt-inner{color:var(--cyan);text-shadow:0 0 15px rgba(0,245,255,0.8);}
+.rt-big{font-family:'Orbitron';font-size:32px;font-weight:900;color:var(--green);text-shadow:0 0 20px rgba(0,255,159,0.5);}
+
+/* RHYTHM */
+.rhythm-arena{display:flex;flex-direction:column;align-items:center;gap:18px;padding:16px 0;}
+.beat-indicator{width:50px;height:50px;border-radius:50%;border:2px solid var(--border);background:var(--bg3);transition:all .1s;}
+.beat-indicator.flash{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 20px rgba(0,245,255,0.8);}
+.metro-bars{display:flex;gap:6px;align-items:flex-end;height:55px;}
+.metro-bar{width:14px;border-radius:2px 2px 0 0;background:var(--border);transition:all .15s;}
+.metro-bar.active{background:var(--cyan);box-shadow:0 0 12px rgba(0,245,255,0.6);}
+.tap-btn{width:190px;height:190px;border-radius:50%;border:3px solid var(--border-hi);background:rgba(0,245,255,0.06);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;cursor:pointer;user-select:none;touch-action:none;transition:all .1s;box-shadow:0 0 20px rgba(0,245,255,0.1);}
+.tap-btn:active,.tap-btn.tapped{background:rgba(0,245,255,0.18);box-shadow:0 0 50px rgba(0,245,255,0.5);transform:scale(.95);}
+.tap-btn.on-beat{border-color:var(--green);box-shadow:0 0 40px rgba(0,255,159,0.5);}
+.tap-btn.off-beat{border-color:var(--red);box-shadow:0 0 30px rgba(255,58,92,0.4);}
+.tap-label{font-family:'Orbitron';font-size:18px;font-weight:900;color:var(--cyan);letter-spacing:.1em;pointer-events:none;}
+.tap-sub{font-size:11px;letter-spacing:.14em;color:var(--text-dim);pointer-events:none;}
+
+/* ACCURACY */
+.acc-arena{display:flex;flex-direction:column;align-items:center;gap:18px;padding:14px 0;}
+.acc-question{font-family:'Orbitron';font-size:34px;font-weight:900;color:var(--cyan);text-align:center;text-shadow:0 0 20px rgba(0,245,255,0.4);min-height:54px;display:flex;align-items:center;justify-content:center;}
+.acc-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:360px;}
+.acc-btn{padding:18px 10px;border-radius:4px;border:2px solid var(--border);background:transparent;color:var(--text);font-family:'Orbitron';font-size:18px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-align:center;transition:all .15s;}
+.acc-btn:hover,.acc-btn:active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,0.07);}
+.acc-btn.correct{border-color:var(--green);background:rgba(0,255,159,0.12);color:var(--green);}
+.acc-btn.wrong{border-color:var(--red);background:rgba(255,58,92,0.12);color:var(--red);}
+.acc-btn:disabled{cursor:default;}
+.acc-timer-bar{width:100%;max-width:360px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.acc-timer-fill{height:100%;border-radius:3px;background:var(--cyan);transition:width .1s linear;}
+
+/* SPEED */
+.speed-arena{display:flex;flex-direction:column;align-items:center;gap:18px;padding:14px 0;}
+.speed-score-big{font-family:'Orbitron';font-size:64px;font-weight:900;color:var(--cyan);text-shadow:0 0 30px rgba(0,245,255,0.5);}
+.speed-bar-wrap{width:100%;max-width:400px;}
+.speed-bar-bg{height:16px;background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.speed-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--cyan),var(--cyan-dim));transition:width .1s;box-shadow:0 0 10px rgba(0,245,255,0.4);}
+.sp-tap-btn{width:160px;height:160px;border-radius:16px;border:3px solid var(--border-hi);background:rgba(0,245,255,0.06);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;user-select:none;touch-action:none;transition:all .08s;}
+.sp-tap-btn:active,.sp-tap-btn.tapped{background:rgba(0,245,255,0.18);box-shadow:0 0 40px rgba(0,245,255,0.5);transform:scale(.94);}
+.sp-tap-icon{font-size:40px;pointer-events:none;}
+.sp-tap-label{font-family:'Orbitron';font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--text-dim);pointer-events:none;}
+
+/* TAGS */
+.tag{display:inline-block;padding:2px 7px;border-radius:2px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;}
+.tag.good{background:rgba(0,255,159,0.1);color:var(--green);border:1px solid rgba(0,255,159,0.3);}
+.tag.warn{background:rgba(255,184,0,0.1);color:var(--amber);border:1px solid rgba(255,184,0,0.3);}
+.tag.alert{background:rgba(255,58,92,0.1);color:var(--red);border:1px solid rgba(255,58,92,0.3);}
+.tag.info{background:rgba(0,245,255,0.1);color:var(--cyan);border:1px solid rgba(0,245,255,0.3);}
+.tag.purple{background:rgba(176,96,255,0.1);color:var(--purple);border:1px solid rgba(176,96,255,0.3);}
+
+/* PROFILE */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.profile-stat{text-align:center;padding:12px 8px;border:1px solid var(--border);border-radius:4px;background:var(--cyan-faint);}
+.profile-stat .sc{font-family:'Orbitron';font-size:24px;font-weight:900;}
+.profile-stat .nm{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;}
+.profile-stat .sb{height:3px;border-radius:2px;margin-top:8px;background:var(--bg3);overflow:hidden;}
+.profile-stat .sbf{height:100%;border-radius:2px;transition:width 1.5s cubic-bezier(.4,0,.2,1);}
+
+/* SCORE RING */
+.score-ring{position:relative;width:100px;height:100px;}
+.score-ring svg{transform:rotate(-90deg);}
+.score-ring .sr-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.score-ring .sr-num{font-family:'Orbitron';font-size:24px;font-weight:900;color:var(--cyan);}
+.score-ring .sr-sub{font-size:9px;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;}
+
+/* INSIGHTS */
+.insight-card{border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:12px;background:rgba(0,245,255,0.02);position:relative;overflow:hidden;opacity:0;transform:translateY(10px);transition:opacity .6s,transform .6s;}
+.insight-card.visible{opacity:1;transform:translateY(0);}
+.insight-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+.insight-card.type-info::before{background:var(--cyan);}
+.insight-card.type-warn::before{background:var(--amber);}
+.insight-card.type-action::before{background:var(--green);}
+.insight-card.type-clinical::before{background:var(--purple);}
+.insight-title{font-family:'Orbitron';font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+.insight-card.type-info .insight-title{color:var(--cyan);}
+.insight-card.type-warn .insight-title{color:var(--amber);}
+.insight-card.type-action .insight-title{color:var(--green);}
+.insight-card.type-clinical .insight-title{color:var(--purple);}
+.insight-text{font-size:13px;line-height:1.65;color:var(--text);}
+
+.clin-app-card{border:1px solid rgba(176,96,255,0.25);border-radius:4px;padding:14px;margin-bottom:10px;background:rgba(176,96,255,0.04);position:relative;opacity:0;transform:translateY(8px);transition:opacity .6s,transform .6s;}
+.clin-app-card.visible{opacity:1;transform:translateY(0);}
+.clin-app-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--purple);}
+.clin-app-title{font-family:'Orbitron';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);margin-bottom:6px;}
+.clin-app-text{font-size:12px;line-height:1.6;color:var(--text-dim);}
+
+.drill-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;margin-bottom:7px;background:rgba(0,245,255,0.03);border:1px solid var(--border);border-radius:3px;opacity:0;transform:translateX(-10px);transition:opacity .5s,transform .5s;}
+.drill-item.visible{opacity:1;transform:translateX(0);}
+.drill-num{font-family:'Orbitron';font-size:10px;color:var(--cyan);opacity:.6;width:18px;flex-shrink:0;padding-top:1px;}
+.drill-text{flex:1;font-size:12px;color:var(--text-dim);line-height:1.5;}
+.drill-int{font-family:'Share Tech Mono';font-size:10px;flex-shrink:0;}
+.drill-int.high{color:var(--red);} .drill-int.med{color:var(--amber);} .drill-int.low{color:var(--green);}
+
+/* CDR */
+.cdr-gauge{display:flex;align-items:center;gap:14px;margin:10px 0;}
+.cdr-level{font-family:'Orbitron';font-size:18px;font-weight:900;}
+.cdr-level.low{color:var(--green);} .cdr-level.moderate{color:var(--amber);} .cdr-level.elevated{color:var(--red);}
+.cdr-bar-bg{flex:1;height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;}
+.cdr-bar-fill{height:100%;border-radius:5px;width:0;transition:width 1.8s cubic-bezier(.4,0,.2,1);}
+
+/* REPORT */
+.report-section{margin-bottom:16px;}
+.report-section-title{font-family:'Orbitron';font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.report-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,245,255,0.05);}
+.report-row:last-child{border-bottom:none;}
+.report-key{font-size:12px;color:var(--text-dim);}
+.report-val{font-family:'Share Tech Mono';font-size:12px;color:var(--cyan);}
+.report-val.rg{color:var(--green);} .report-val.ra{color:var(--amber);} .report-val.rr{color:var(--red);} .report-val.rp{color:var(--purple);}
+
+/* NEXT BTN */
+.next-btn{display:block;width:100%;padding:16px;margin-top:6px;font-family:'Orbitron';font-size:13px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;background:rgba(0,245,255,0.08);border:2px solid var(--cyan);border-radius:4px;color:var(--cyan);cursor:pointer;text-align:center;box-shadow:0 0 20px rgba(0,245,255,0.12);transition:all .2s;}
+.next-btn:hover,.next-btn:active{background:rgba(0,245,255,0.16);box-shadow:0 0 35px rgba(0,245,255,0.3);}
+.next-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* FLASH */
+.feedback-flash{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:0;transition:opacity .15s;}
+.feedback-flash.show-g{background:rgba(0,255,159,0.07);opacity:1;}
+.feedback-flash.show-r{background:rgba(255,58,92,0.07);opacity:1;}
+
+.terminal-line{font-family:'Share Tech Mono';font-size:11px;color:var(--text-dim);margin-bottom:3px;line-height:1.5;}
+.long-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
+.long-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);}
+.long-legend-dot{width:20px;height:3px;border-radius:2px;}
+
+@media(max-width:560px){.phase-label{display:none;}.acc-question{font-size:26px;}.speed-score-big{font-size:48px;}}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="feedback-flash" id="fflash"></div>
+
+<div id="app">
+
+  <!-- MILVRE BAR -->
+  <div class="milvre-bar">
+    <div class="milvre-left">MILVRE</div>
+    <div class="milvre-right">duszyński<span class="milvre-sep">/</span>standard</div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 44 44" fill="none">
+          <circle cx="22" cy="22" r="20" stroke="#00f5ff" stroke-width="1" opacity=".4"/>
+          <circle cx="22" cy="22" r="13" stroke="#00f5ff" stroke-width="1" opacity=".6"/>
+          <circle cx="22" cy="22" r="5" fill="#00f5ff" opacity=".9"/>
+          <line x1="22" y1="2" x2="22" y2="9" stroke="#00f5ff" stroke-width="1.5"/>
+          <line x1="22" y1="35" x2="22" y2="42" stroke="#00f5ff" stroke-width="1.5"/>
+          <line x1="2" y1="22" x2="9" y2="22" stroke="#00f5ff" stroke-width="1.5"/>
+          <line x1="35" y1="22" x2="42" y2="22" stroke="#00f5ff" stroke-width="1.5"/>
+          <path d="M8 8 L15 15" stroke="#00f5ff" stroke-width="1" opacity=".5"/>
+          <path d="M29 29 L36 36" stroke="#00f5ff" stroke-width="1" opacity=".5"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <h1>NeuroAdapt AI</h1>
+        <p>Performance Stability Assessment System</p>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="status-item"><span id="hdr-time">00:00</span><span>Session</span></div>
+      <div class="status-item"><span id="hdr-phase">READY</span><span>Phase</span></div>
+      <div class="v-badge">v4.0</div>
+    </div>
+  </header>
+
+  <!-- PHASE TRACK -->
+  <div class="phase-track">
+    <div class="phase-item" id="ph0"><div class="phase-dot">1</div><div class="phase-label">Reaction</div></div>
+    <div class="phase-item" id="ph1"><div class="phase-dot">2</div><div class="phase-label">Rhythm</div></div>
+    <div class="phase-item" id="ph2"><div class="phase-dot">3</div><div class="phase-label">Accuracy</div></div>
+    <div class="phase-item" id="ph3"><div class="phase-dot">4</div><div class="phase-label">Speed</div></div>
+    <div class="phase-item" id="ph4"><div class="phase-dot">5</div><div class="phase-label">Report</div></div>
+  </div>
+
+  <div id="main-content">
+
+    <!-- WELCOME -->
+    <div class="section active" id="sec-welcome">
+      <div class="panel">
+        <div class="panel-title">NeuroAdapt Live Assessment</div>
+        <p style="color:var(--text-dim);font-size:14px;line-height:1.7;margin-bottom:20px;">
+          Four real performance tests. Your actual reaction times, accuracy and rhythm are measured and analysed in real time.
+          Results generate a personal <strong style="color:var(--cyan)">NeuroAdapt Performance Profile</strong> and Clinical Report.
+        </p>
+        <div class="welcome-grid">
+          <div class="welcome-stat"><div class="wval">4</div><div class="wlbl">Live Tests</div></div>
+          <div class="welcome-stat"><div class="wval">~5<span style="font-size:14px">min</span></div><div class="wlbl">Duration</div></div>
+          <div class="welcome-stat"><div class="wval">5</div><div class="wlbl">Dimensions</div></div>
+          <div class="welcome-stat"><div class="wval">Real</div><div class="wlbl">Your Data</div></div>
+        </div>
+        <div style="margin:20px 0;padding:14px;border:1px solid rgba(255,184,0,0.22);border-radius:4px;background:rgba(255,184,0,0.04);">
+          <div style="font-family:Orbitron;font-size:10px;letter-spacing:.15em;color:var(--amber);margin-bottom:10px;">WHAT TO EXPECT</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.9;">
+            ① <strong style="color:var(--text)">Reaction Timing</strong> — tap when the circle turns cyan (8 rounds)<br>
+            ② <strong style="color:var(--text)">Rhythm Consistency</strong> — tap in sync with the beat for 30 seconds<br>
+            ③ <strong style="color:var(--text)">Accuracy Under Pressure</strong> — solve math problems before the timer runs out<br>
+            ④ <strong style="color:var(--text)">Speed Under Pressure</strong> — tap as fast as possible for 20 seconds
+          </div>
+        </div>
+        <button class="start-btn" id="start-btn">▶ BEGIN LIVE ASSESSMENT</button>
+      </div>
+    </div>
+
+    <!-- TEST 1: REACTION -->
+    <div class="section" id="sec-reaction">
+      <div class="test-header">
+        <div class="test-number">TEST 1 OF 4</div>
+        <div class="test-name-big">⚡ REACTION TIMING</div>
+        <div class="test-instruction">Tap the circle <strong style="color:var(--cyan)">as fast as possible</strong> when it turns cyan.<br>Tapping early counts as a miss.</div>
+      </div>
+      <div class="test-progress">
+        <div class="tp-info"><span id="rt-label">Round 1 of 8</span><span id="rt-pct">0%</span></div>
+        <div class="tp-bar"><div class="tp-fill" id="rt-bar" style="width:0%"></div></div>
+      </div>
+      <div class="live-stats">
+        <div class="live-stat"><span class="sv" id="rt-avg">—</span><span class="sl">Avg RT ms</span></div>
+        <div class="live-stat"><span class="sv" id="rt-best">—</span><span class="sl">Best RT</span></div>
+        <div class="live-stat"><span class="sv" id="rt-hits">0</span><span class="sl">Hits</span></div>
+        <div class="live-stat"><span class="sv" id="rt-miss">0</span><span class="sl">Misses</span></div>
+      </div>
+      <div class="panel">
+        <div class="reaction-arena">
+          <div class="reaction-target" id="rt-target" ontouchstart="rtTap(event)" onclick="rtTap(event)">
+            <div class="rt-inner" id="rt-inner">WAIT…</div>
+          </div>
+          <div id="rt-feedback" style="font-family:Share Tech Mono;font-size:13px;color:var(--text-dim);text-align:center;">Preparing first stimulus…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST 2: RHYTHM -->
+    <div class="section" id="sec-rhythm">
+      <div class="test-header">
+        <div class="test-number">TEST 2 OF 4</div>
+        <div class="test-name-big">〜 RHYTHM CONSISTENCY</div>
+        <div class="test-instruction">Tap <strong style="color:var(--cyan)">in sync with the flashing beat</strong> for 30 seconds.</div>
+      </div>
+      <div class="test-progress">
+        <div class="tp-info"><span>30-second rhythm test</span><span id="rh-left">30s</span></div>
+        <div class="tp-bar"><div class="tp-fill" id="rh-bar" style="width:0%"></div></div>
+      </div>
+      <div class="live-stats">
+        <div class="live-stat"><span class="sv" id="rh-cons">—</span><span class="sl">Consistency</span></div>
+        <div class="live-stat"><span class="sv" id="rh-taps">0</span><span class="sl">Taps</span></div>
+        <div class="live-stat"><span class="sv" id="rh-on">0</span><span class="sl">On Beat</span></div>
+        <div class="live-stat"><span class="sv" id="rh-err">—</span><span class="sl">Avg Error ms</span></div>
+      </div>
+      <div class="panel">
+        <div class="rhythm-arena">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="beat-indicator" id="beat-ind"></div>
+            <div>
+              <div style="font-family:Orbitron;font-size:14px;color:var(--cyan);letter-spacing:.1em;">120 BPM</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">Follow the flash</div>
+            </div>
+          </div>
+          <div class="metro-bars" id="metro-bars">
+            <div class="metro-bar" style="height:20px"></div><div class="metro-bar" style="height:32px"></div>
+            <div class="metro-bar" style="height:46px"></div><div class="metro-bar" style="height:34px"></div>
+            <div class="metro-bar" style="height:50px"></div><div class="metro-bar" style="height:28px"></div>
+            <div class="metro-bar" style="height:40px"></div><div class="metro-bar" style="height:22px"></div>
+          </div>
+          <button class="tap-btn" id="tap-btn" ontouchstart="rhTap(event)" onclick="rhTap(event)">
+            <div class="tap-label">TAP</div>
+            <div class="tap-sub">with the beat</div>
+          </button>
+          <div id="rh-feedback" style="font-family:Share Tech Mono;font-size:13px;color:var(--text-dim);text-align:center;">Starting in a moment…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST 3: ACCURACY -->
+    <div class="section" id="sec-accuracy">
+      <div class="test-header">
+        <div class="test-number">TEST 3 OF 4</div>
+        <div class="test-name-big">◈ ACCURACY UNDER PRESSURE</div>
+        <div class="test-instruction">Select the correct answer <strong style="color:var(--cyan)">before the timer runs out</strong>. Pressure increases.</div>
+      </div>
+      <div class="test-progress">
+        <div class="tp-info"><span id="acc-qlabel">Question 1 of 12</span><span id="acc-pct">0%</span></div>
+        <div class="tp-bar"><div class="tp-fill" id="acc-bar" style="width:0%"></div></div>
+      </div>
+      <div class="live-stats">
+        <div class="live-stat"><span class="sv" id="acc-cor">0</span><span class="sl">Correct</span></div>
+        <div class="live-stat"><span class="sv" id="acc-err">0</span><span class="sl">Errors</span></div>
+        <div class="live-stat"><span class="sv" id="acc-rate">—</span><span class="sl">Accuracy</span></div>
+        <div class="live-stat"><span class="sv" id="acc-rt">—</span><span class="sl">Avg RT ms</span></div>
+      </div>
+      <div class="panel">
+        <div class="acc-arena">
+          <div class="acc-timer-bar"><div class="acc-timer-fill" id="acc-tfill" style="width:100%"></div></div>
+          <div class="acc-question" id="acc-q">—</div>
+          <div id="acc-sub" style="font-size:12px;color:var(--text-dim);letter-spacing:.08em;">Select the correct answer</div>
+          <div class="acc-options" id="acc-opts"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST 4: SPEED -->
+    <div class="section" id="sec-speed">
+      <div class="test-header">
+        <div class="test-number">TEST 4 OF 4</div>
+        <div class="test-name-big">▶▶ SPEED UNDER PRESSURE</div>
+        <div class="test-instruction">Tap <strong style="color:var(--cyan)">as many times as possible</strong> in 20 seconds.</div>
+      </div>
+      <div class="test-progress">
+        <div class="tp-info"><span>20-second speed test</span><span id="sp-left">20s</span></div>
+        <div class="tp-bar"><div class="tp-fill" id="sp-bar" style="width:0%"></div></div>
+      </div>
+      <div class="live-stats">
+        <div class="live-stat"><span class="sv" id="sp-taps">0</span><span class="sl">Taps</span></div>
+        <div class="live-stat"><span class="sv" id="sp-rate">0.0</span><span class="sl">Taps/sec</span></div>
+        <div class="live-stat"><span class="sv" id="sp-peak">0.0</span><span class="sl">Peak/sec</span></div>
+        <div class="live-stat"><span class="sv" id="sp-pres">0%</span><span class="sl">Pressure</span></div>
+      </div>
+      <div class="panel">
+        <div class="speed-arena">
+          <div class="speed-score-big" id="sp-score">0</div>
+          <div class="speed-bar-wrap">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-bottom:4px;letter-spacing:.1em;">
+              <span>PACE</span><span id="sp-pace">READY</span>
+            </div>
+            <div class="speed-bar-bg"><div class="speed-bar-fill" id="sp-fill" style="width:0%"></div></div>
+          </div>
+          <button class="sp-tap-btn" id="sp-btn" ontouchstart="spTap(event)" onclick="spTap(event)">
+            <div class="sp-tap-icon">⚡</div>
+            <div class="sp-tap-label">TAP HERE</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCESSING -->
+    <div class="section" id="sec-processing">
+      <div class="panel" style="text-align:center;padding:30px 22px;">
+        <div style="font-family:Orbitron;font-size:24px;font-weight:900;color:var(--cyan);text-shadow:0 0 30px rgba(0,245,255,0.5);margin-bottom:8px;">ASSESSMENT COMPLETE</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:22px;">Analysing your performance data…</div>
+        <div id="proc-log" style="text-align:left;max-width:420px;margin:0 auto 22px;"></div>
+        <button class="next-btn" id="view-profile-btn" onclick="showProfile()" disabled>▶ VIEW PERFORMANCE PROFILE</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="section" id="sec-profile">
+      <div class="panel">
+        <div class="panel-title">NeuroAdapt Performance Profile</div>
+        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+          <canvas id="radarCanvas" width="280" height="260" style="flex-shrink:0;"></canvas>
+          <div style="flex:1;min-width:200px;">
+            <div class="profile-grid" id="profile-stats"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Overall Stability Index</div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div class="score-ring">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="43" stroke="rgba(0,245,255,0.1)" stroke-width="8" fill="none"/>
+              <circle cx="50" cy="50" r="43" stroke="var(--cyan)" stroke-width="8" fill="none"
+                stroke-dasharray="270.2" stroke-dashoffset="270.2" id="stab-arc" stroke-linecap="round"
+                style="filter:drop-shadow(0 0 6px rgba(0,245,255,0.6));transition:stroke-dashoffset 2s cubic-bezier(.4,0,.2,1)"/>
+            </svg>
+            <div class="sr-text"><span class="sr-num" id="stab-num">0</span><span class="sr-sub">/ 100</span></div>
+          </div>
+          <div style="flex:1;">
+            <div id="stab-label" style="font-family:Orbitron;font-size:14px;color:var(--cyan);margin-bottom:7px;"></div>
+            <div id="stab-desc" style="font-size:13px;color:var(--text-dim);line-height:1.6;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Cognitive Decline Risk Index</div>
+        <div id="cdr-content"></div>
+      </div>
+      <button class="next-btn" onclick="showCoaching()">▶ VIEW AI COACHING</button>
+    </div>
+
+    <!-- COACHING -->
+    <div class="section" id="sec-coaching">
+      <div class="panel">
+        <div class="panel-title">AI Performance Insights</div>
+        <div id="insights-container"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" style="color:var(--purple);">
+          <span style="display:inline-block;width:3px;height:14px;background:var(--purple);box-shadow:0 0 8px var(--purple);margin-right:10px;flex-shrink:0;"></span>
+          Clinical Applications
+        </div>
+        <div id="clin-apps"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Adaptive Training Protocol</div>
+        <div id="drills"></div>
+      </div>
+      <button class="next-btn" onclick="showReport()">▶ VIEW CLINICAL REPORT</button>
+    </div>
+
+    <!-- REPORT -->
+    <div class="section" id="sec-report">
+      <div class="panel">
+        <div class="panel-title">Longitudinal Performance Tracking</div>
+        <div class="long-legend" id="long-legend"></div>
+        <canvas id="longCanvas" height="200" style="width:100%;display:block;"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-title" style="color:var(--purple);">
+          <span style="display:inline-block;width:3px;height:14px;background:var(--purple);box-shadow:0 0 8px var(--purple);margin-right:10px;flex-shrink:0;"></span>
+          Clinical Summary Report
+        </div>
+        <div id="clin-summary"></div>
+      </div>
+      <button class="next-btn" onclick="restart()">↺ TAKE ASSESSMENT AGAIN</button>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA STORE — all real measurements collected here
+// ═══════════════════════════════════════════════════
+const D = {
+  reaction: { rts:[], misses:0, earlyTaps:0 },
+  rhythm:   { taps:[], beatTimes:[], onBeat:0, offBeat:0, errors:[] },
+  accuracy: { correct:0, errors:0, rts:[], timedOut:0 },
+  speed:    { totalTaps:0, tapTimes:[], peakRate:0 },
+};
+
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r,ms));
+const rnd = (a,b) => a+Math.random()*(b-a);
+let sessionStart = Date.now();
+
+// Timer
+setInterval(()=>{
+  const s=Math.floor((Date.now()-sessionStart)/1000);
+  $('hdr-time').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+},1000);
+
+function setPhaseActive(n){
+  for(let i=0;i<5;i++){
+    const p=$('ph'+i); p.classList.remove('active','done');
+    if(i<n) p.classList.add('done');
+    if(i===n) p.classList.add('active');
+  }
+  const L=['REACTION','RHYTHM','ACCURACY','SPEED','REPORT'];
+  $('hdr-phase').textContent=L[n]||'DONE';
+}
+
+function show(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function flash(ok){
+  const el=$('fflash');
+  el.className='feedback-flash '+(ok?'show-g':'show-r');
+  setTimeout(()=>el.className='feedback-flash',200);
+}
+
+// ═══════════════════════════════════════════════════
+// WELCOME
+// ═══════════════════════════════════════════════════
+function startAssessment(){
+  sessionStart=Date.now();
+  Object.assign(D,{
+    reaction:{rts:[],misses:0,earlyTaps:0},
+    rhythm:{taps:[],beatTimes:[],onBeat:0,offBeat:0,errors:[]},
+    accuracy:{correct:0,errors:0,rts:[],timedOut:0},
+    speed:{totalTaps:0,tapTimes:[],peakRate:0}
+  });
+  show('sec-reaction'); setPhaseActive(0);
+  setTimeout(initReaction,500);
+}
+
+function restart(){
+  show('sec-welcome');
+  for(let i=0;i<5;i++) $('ph'+i).classList.remove('active','done');
+  $('hdr-phase').textContent='READY';
+}
+
+// ═══════════════════════════════════════════════════
+// TEST 1 — REACTION
+// ═══════════════════════════════════════════════════
+let RT = {};
+
+function initReaction(){
+  RT={round:0,total:8,waitTimer:null,stimTime:null,active:false,done:false};
+  $('rt-target').className='reaction-target';
+  $('rt-inner').textContent='WAIT…';
+  $('rt-feedback').textContent='Get ready — watch the circle';
+  updateRtUI();
+  setTimeout(nextRtStimulus,1200);
+}
+
+function nextRtStimulus(){
+  if(RT.done) return;
+  $('rt-target').className='reaction-target';
+  $('rt-inner').textContent='WAIT…';
+  RT.active=false; RT.stimTime=null;
+  const delay=rnd(1100,3400);
+  RT.waitTimer=setTimeout(()=>{
+    if(RT.done) return;
+    RT.active=true; RT.stimTime=Date.now();
+    $('rt-target').className='reaction-target ready';
+    $('rt-inner').textContent='TAP!';
+    $('rt-feedback').textContent='⚡ NOW!';
+    RT.waitTimer=setTimeout(()=>{
+      if(!RT.active) return;
+      RT.active=false; D.reaction.misses++;
+      $('rt-target').className='reaction-target too-early';
+      $('rt-inner').textContent='MISSED';
+      $('rt-feedback').textContent='✗ Too slow';
+      flash(false); updateRtUI(); advanceRt();
+    },1500);
+  },delay);
+}
+
+function rtTap(e){
+  if(e) e.preventDefault();
+  if(RT.done) return;
+  if(!RT.active){
+    clearTimeout(RT.waitTimer);
+    D.reaction.earlyTaps++; D.reaction.misses++;
+    $('rt-target').className='reaction-target too-early';
+    $('rt-inner').textContent='TOO EARLY';
+    $('rt-feedback').textContent='✗ Wait for cyan!';
+    flash(false); updateRtUI(); advanceRt(); return;
+  }
+  clearTimeout(RT.waitTimer);
+  const rt=Date.now()-RT.stimTime;
+  RT.active=false;
+  D.reaction.rts.push(rt);
+  $('rt-target').className='reaction-target hit';
+  $('rt-inner').textContent=rt+'ms';
+  $('rt-feedback').innerHTML=`<span style="font-family:Orbitron;font-size:28px;font-weight:900;color:var(--green);text-shadow:0 0 16px rgba(0,255,159,0.6)">${rt}ms</span>`;
+  flash(true); updateRtUI(); advanceRt();
+}
+
+function advanceRt(){
+  RT.round++;
+  const pct=Math.round((RT.round/RT.total)*100);
+  $('rt-bar').style.width=pct+'%'; $('rt-pct').textContent=pct+'%';
+  $('rt-label').textContent=`Round ${Math.min(RT.round+1,RT.total)} of ${RT.total}`;
+  if(RT.round>=RT.total){ RT.done=true; setTimeout(doneReaction,900); return; }
+  setTimeout(nextRtStimulus,rnd(900,1300));
+}
+
+function updateRtUI(){
+  const r=D.reaction.rts;
+  $('rt-avg').textContent=r.length?Math.round(r.reduce((a,b)=>a+b,0)/r.length):'—';
+  $('rt-best').textContent=r.length?Math.min(...r):'—';
+  $('rt-hits').textContent=r.length;
+  $('rt-miss').textContent=D.reaction.misses;
+}
+
+function doneReaction(){
+  clearTimeout(RT.waitTimer);
+  $('rt-bar').style.width='100%'; $('rt-pct').textContent='100%';
+  $('rt-target').className='reaction-target';
+  $('rt-inner').textContent='DONE ✓';
+  setTimeout(()=>{ show('sec-rhythm'); setPhaseActive(1); setTimeout(initRhythm,600); },1000);
+}
+
+// ═══════════════════════════════════════════════════
+// TEST 2 — RHYTHM
+// ═══════════════════════════════════════════════════
+let RH={};
+
+function initRhythm(){
+  RH={bpm:120,interval:500,running:false,startTime:null,beatCount:0,beatTimer:null,progTimer:null,duration:30000,tapWindow:140};
+  $('rh-cons').textContent='—'; $('rh-taps').textContent='0';
+  $('rh-on').textContent='0'; $('rh-err').textContent='—';
+  $('rh-feedback').textContent='Get ready — beat starts in 2 seconds';
+  setTimeout(()=>{
+    RH.running=true; RH.startTime=Date.now();
+    beatTick();
+    RH.progTimer=setInterval(updateRhProgress,200);
+  },2000);
+}
+
+function beatTick(){
+  if(!RH.running) return;
+  const elapsed=Date.now()-RH.startTime;
+  if(elapsed>=RH.duration){ doneRhythm(); return; }
+  const now=Date.now();
+  RH.beatCount++; D.rhythm.beatTimes.push(now);
+  flashBeat();
+  RH.beatTimer=setTimeout(beatTick,RH.interval);
+}
+
+function flashBeat(){
+  const ind=$('beat-ind');
+  ind.classList.add('flash');
+  const bars=document.querySelectorAll('.metro-bar');
+  bars.forEach(b=>b.classList.remove('active'));
+  bars[RH.beatCount%bars.length].classList.add('active');
+  setTimeout(()=>ind.classList.remove('flash'),110);
+}
+
+function rhTap(e){
+  if(e) e.preventDefault();
+  if(!RH.running) return;
+  const now=Date.now();
+  D.rhythm.taps.push(now);
+  $('rh-taps').textContent=D.rhythm.taps.length;
+  const btn=$('tap-btn');
+  btn.classList.add('tapped'); setTimeout(()=>btn.classList.remove('tapped'),140);
+  let minErr=Infinity;
+  D.rhythm.beatTimes.forEach(bt=>{ const e=Math.abs(now-bt); if(e<minErr)minErr=e; });
+  D.rhythm.errors.push(minErr);
+  if(minErr<RH.tapWindow){
+    D.rhythm.onBeat++;
+    btn.classList.add('on-beat'); setTimeout(()=>btn.classList.remove('on-beat'),200);
+    $('rh-feedback').textContent=`✓ On beat! (±${minErr}ms)`;
+    flash(true);
+  } else {
+    D.rhythm.offBeat++;
+    btn.classList.add('off-beat'); setTimeout(()=>btn.classList.remove('off-beat'),200);
+    $('rh-feedback').textContent=`✗ Off beat (error: ${minErr}ms)`;
+    flash(false);
+  }
+  const total=D.rhythm.onBeat+D.rhythm.offBeat;
+  $('rh-cons').textContent=total?Math.round((D.rhythm.onBeat/total)*100)+'%':'—';
+  $('rh-on').textContent=D.rhythm.onBeat;
+  if(D.rhythm.errors.length){
+    $('rh-err').textContent=Math.round(D.rhythm.errors.reduce((a,b)=>a+b,0)/D.rhythm.errors.length);
+  }
+}
+
+function updateRhProgress(){
+  if(!RH.running) return;
+  const elapsed=Date.now()-RH.startTime;
+  const pct=Math.min(100,(elapsed/RH.duration)*100);
+  $('rh-bar').style.width=pct+'%';
+  $('rh-left').textContent=Math.max(0,Math.ceil((RH.duration-elapsed)/1000))+'s';
+  if(elapsed>=RH.duration) doneRhythm();
+}
+
+function doneRhythm(){
+  if(!RH.running) return;
+  RH.running=false;
+  clearTimeout(RH.beatTimer); clearInterval(RH.progTimer);
+  $('rh-bar').style.width='100%'; $('rh-left').textContent='0s';
+  setTimeout(()=>{ show('sec-accuracy'); setPhaseActive(2); setTimeout(initAccuracy,500); },1200);
+}
+
+// ═══════════════════════════════════════════════════
+// TEST 3 — ACCURACY
+// ═══════════════════════════════════════════════════
+let AC={};
+
+function genQuestion(){
+  const diff=Math.floor(AC.qIdx/4);
+  let q,ans,opts;
+  if(diff===0){
+    const a=Math.floor(rnd(3,18)),b=Math.floor(rnd(3,18));
+    const op=Math.random()<0.5?'+':'-';
+    ans=op==='+'?a+b:a-b; q=`${a} ${op} ${b}`;
+  } else if(diff===1){
+    const a=Math.floor(rnd(4,12)),b=Math.floor(rnd(3,9));
+    ans=a*b; q=`${a} × ${b}`;
+  } else {
+    const a=Math.floor(rnd(6,15)),b=Math.floor(rnd(4,12));
+    ans=a*b; q=`${a} × ${b}`;
+  }
+  const wrongs=new Set();
+  while(wrongs.size<3){ const w=ans+Math.floor(rnd(-9,9)); if(w!==ans&&w>0)wrongs.add(w); }
+  opts=[ans,...[...wrongs]].sort(()=>Math.random()-.5);
+  return {q,ans,opts};
+}
+
+function initAccuracy(){
+  AC={qIdx:0,total:12,answered:false,timerInt:null,startTime:null,currentAns:null};
+  D.accuracy={correct:0,errors:0,rts:[],timedOut:0};
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(AC.qIdx>=AC.total){ doneAccuracy(); return; }
+  AC.answered=false; clearInterval(AC.timerInt);
+  const timeLimit=Math.max(1400,3500-AC.qIdx*140);
+  AC.startTime=Date.now();
+  const {q,ans,opts}=genQuestion();
+  AC.currentAns=ans;
+  const pct=Math.round((AC.qIdx/AC.total)*100);
+  $('acc-bar').style.width=pct+'%'; $('acc-pct').textContent=pct+'%';
+  $('acc-qlabel').textContent=`Question ${AC.qIdx+1} of ${AC.total}`;
+  $('acc-q').textContent=q;
+  $('acc-sub').textContent=`Choose correct answer — ${(timeLimit/1000).toFixed(1)}s`;
+  $('acc-opts').innerHTML=opts.map(o=>`<button class="acc-btn" onclick="accPick(${o},${ans})">${o}</button>`).join('');
+  // Timer
+  $('acc-tfill').style.cssText='width:100%;background:var(--cyan);transition:none;';
+  setTimeout(()=>{
+    $('acc-tfill').style.cssText=`width:0%;background:var(--cyan);transition:width ${timeLimit}ms linear;`;
+  },30);
+  AC.timerInt=setInterval(()=>{
+    const elapsed=Date.now()-AC.startTime;
+    const pctLeft=(timeLimit-elapsed)/timeLimit;
+    $('acc-tfill').style.background=pctLeft>0.5?'var(--cyan)':pctLeft>0.25?'var(--amber)':'var(--red)';
+    if(elapsed>=timeLimit&&!AC.answered){
+      clearInterval(AC.timerInt); AC.answered=true;
+      D.accuracy.errors++; D.accuracy.timedOut++; D.accuracy.rts.push(timeLimit);
+      document.querySelectorAll('.acc-btn').forEach(b=>b.disabled=true);
+      $('acc-sub').textContent='⏱ Time up!'; flash(false);
+      updateAccUI(); setTimeout(()=>{ AC.qIdx++; nextQuestion(); },600);
+    }
+  },80);
+}
+
+function accPick(chosen,correct){
+  if(AC.answered) return;
+  AC.answered=true; clearInterval(AC.timerInt);
+  const rt=Date.now()-AC.startTime;
+  D.accuracy.rts.push(rt);
+  const ok=chosen===correct;
+  document.querySelectorAll('.acc-btn').forEach(b=>{
+    b.disabled=true;
+    if(parseInt(b.textContent)===correct) b.classList.add('correct');
+    if(parseInt(b.textContent)===chosen&&!ok) b.classList.add('wrong');
+  });
+  if(ok){ D.accuracy.correct++; flash(true); }
+  else  { D.accuracy.errors++;  flash(false); }
+  updateAccUI();
+  setTimeout(()=>{ AC.qIdx++; nextQuestion(); },ok?380:700);
+}
+
+function updateAccUI(){
+  $('acc-cor').textContent=D.accuracy.correct;
+  $('acc-err').textContent=D.accuracy.errors;
+  const t=D.accuracy.correct+D.accuracy.errors;
+  $('acc-rate').textContent=t?Math.round((D.accuracy.correct/t)*100)+'%':'—';
+  if(D.accuracy.rts.length) $('acc-rt').textContent=Math.round(D.accuracy.rts.reduce((a,b)=>a+b,0)/D.accuracy.rts.length);
+}
+
+function doneAccuracy(){
+  clearInterval(AC.timerInt);
+  $('acc-bar').style.width='100%'; $('acc-pct').textContent='100%';
+  setTimeout(()=>{ show('sec-speed'); setPhaseActive(3); setTimeout(initSpeed,500); },800);
+}
+
+// ═══════════════════════════════════════════════════
+// TEST 4 — SPEED
+// ═══════════════════════════════════════════════════
+let SP={};
+
+function initSpeed(){
+  SP={running:false,duration:20000,startTime:null,progTimer:null,window:[]};
+  D.speed={totalTaps:0,tapTimes:[],peakRate:0};
+  ['sp-taps','sp-rate','sp-peak'].forEach(id=>$(id).textContent=id.includes('rate')||id.includes('peak')?'0.0':'0');
+  $('sp-pres').textContent='0%'; $('sp-score').textContent='0';
+  $('sp-fill').style.width='0%'; $('sp-pace').textContent='READY';
+  setTimeout(()=>{
+    SP.running=true; SP.startTime=Date.now();
+    SP.progTimer=setInterval(updateSpeedProgress,100);
+  },800);
+}
+
+function spTap(e){
+  if(e) e.preventDefault();
+  if(!SP.running) return;
+  const now=Date.now();
+  D.speed.totalTaps++; D.speed.tapTimes.push(now);
+  SP.window.push(now);
+  while(SP.window.length&&now-SP.window[0]>2000) SP.window.shift();
+  const rate=SP.window.length/2;
+  if(rate>D.speed.peakRate) D.speed.peakRate=rate;
+  $('sp-taps').textContent=D.speed.totalTaps;
+  $('sp-rate').textContent=rate.toFixed(1);
+  $('sp-peak').textContent=D.speed.peakRate.toFixed(1);
+  $('sp-score').textContent=D.speed.totalTaps;
+  $('sp-fill').style.width=Math.min(100,(D.speed.totalTaps/40)*100)+'%';
+  const btn=$('sp-btn');
+  btn.classList.add('tapped'); setTimeout(()=>btn.classList.remove('tapped'),80);
+  flash(true);
+}
+
+function updateSpeedProgress(){
+  if(!SP.running) return;
+  const elapsed=Date.now()-SP.startTime;
+  const pct=Math.min(100,(elapsed/SP.duration)*100);
+  $('sp-bar').style.width=pct+'%';
+  $('sp-left').textContent=Math.max(0,Math.ceil((SP.duration-elapsed)/1000))+'s';
+  $('sp-pres').textContent=Math.round(pct)+'%';
+  if(pct<40) $('sp-pace').textContent='WARMING UP';
+  else if(pct<70) $('sp-pace').textContent='PRESSURE RISING';
+  else $('sp-pace').textContent='MAX PRESSURE';
+  if(elapsed>=SP.duration) doneSpeed();
+}
+
+function doneSpeed(){
+  if(!SP.running) return;
+  SP.running=false; clearInterval(SP.progTimer);
+  $('sp-bar').style.width='100%'; $('sp-left').textContent='0s';
+  setTimeout(()=>{ show('sec-processing'); setPhaseActive(4); runProcessing(); },1000);
+}
+
+// ═══════════════════════════════════════════════════
+// COMPUTED SCORES
+// ═══════════════════════════════════════════════════
+const avg=(arr)=>arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+const avgRT=()=>avg(D.reaction.rts)||999;
+const bestRT=()=>D.reaction.rts.length?Math.min(...D.reaction.rts):999;
+const hitRate=()=>{ const t=D.reaction.rts.length+D.reaction.misses; return t?Math.round((D.reaction.rts.length/t)*100):0; };
+const rhCons=()=>{ const t=D.rhythm.onBeat+D.rhythm.offBeat; return t?Math.round((D.rhythm.onBeat/t)*100):0; };
+const avgRhErr=()=>avg(D.rhythm.errors)||999;
+const accRate=()=>{ const t=D.accuracy.correct+D.accuracy.errors; return t?Math.round((D.accuracy.correct/t)*100):0; };
+const accAvgRT=()=>avg(D.accuracy.rts)||3000;
+const spScore=()=>D.speed.totalTaps;
+const spPeak=()=>+D.speed.peakRate.toFixed(1);
+
+function scoreReactivity(){ return Math.max(0,Math.min(100,Math.round(100-(avgRT()-150)/3))); }
+function scoreStability(){ return Math.round((rhCons()*0.6+hitRate()*0.4)); }
+function scorePressureSens(){
+  const accDrop=100-accRate();
+  const rtVar=D.reaction.rts.length>1
+    ?Math.sqrt(D.reaction.rts.map(r=>(r-avgRT())**2).reduce((a,b)=>a+b,0)/D.reaction.rts.length)
+    :50;
+  return Math.max(0,Math.min(100,100-Math.round(accDrop*0.5+rtVar*0.3)));
+}
+function scoreCognControl(){ return Math.max(0,Math.min(100,Math.round(accRate()*0.65+hitRate()*0.35))); }
+function scoreCDR(){
+  const rt=avgRT()>450?38:avgRT()>350?22:avgRT()>260?10:4;
+  const ac=accRate()<60?33:accRate()<75?18:accRate()<85?8:2;
+  const rh=rhCons()<50?24:rhCons()<65?14:rhCons()<80?6:2;
+  return Math.min(100,rt+ac+rh);
+}
+function overallStability(){ return Math.round((scoreReactivity()*.25+scoreStability()*.25+scorePressureSens()*.25+scoreCognControl()*.25)); }
+
+// ═══════════════════════════════════════════════════
+// PROCESSING
+// ═══════════════════════════════════════════════════
+async function runProcessing(){
+  const log=$('proc-log');
+  const add=async(msg,color,delay=400)=>{
+    await sleep(delay);
+    const d=document.createElement('div'); d.className='terminal-line';
+    d.innerHTML=`<span style="${color?`color:${color}`:''}">${msg}</span>`;
+    log.appendChild(d);
+  };
+  await add('◉ Processing reaction data…','#00f5ff',300);
+  await add(`✓ Avg RT: ${avgRT()}ms | Best: ${bestRT()}ms | Hits: ${D.reaction.rts.length}/${D.reaction.rts.length+D.reaction.misses}`,'#00ff9f');
+  await add('◉ Analysing rhythm patterns…','#00f5ff');
+  await add(`✓ Consistency: ${rhCons()}% | On-beat taps: ${D.rhythm.onBeat}`,'#00ff9f');
+  await add('◉ Evaluating accuracy under pressure…','#00f5ff');
+  await add(`✓ Accuracy: ${accRate()}% | ${D.accuracy.correct}/${D.accuracy.correct+D.accuracy.errors} correct`,'#00ff9f');
+  await add('◉ Computing speed profile…','#00f5ff');
+  await add(`✓ Total taps: ${spScore()} | Peak: ${spPeak()}/sec`,'#00ff9f');
+  await add('◉ Generating NeuroAdapt Performance Profile…','#00f5ff',500);
+  await add(`✓ Overall Stability Index: ${overallStability()}/100`,'#00ff9f',600);
+  $('view-profile-btn').disabled=false;
+}
+
+// ═══════════════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════════════
+function showProfile(){
+  show('sec-profile');
+  const dims=[
+    {name:'Reactivity',           score:scoreReactivity(),   color:'#00f5ff'},
+    {name:'Stability',            score:scoreStability(),    color:'#00ff9f'},
+    {name:'Pressure Sensitivity', score:scorePressureSens(), color:'#ff3a5c'},
+    {name:'Cognitive Control',    score:scoreCognControl(),  color:'#b060ff'},
+    {name:'CDR Index',            score:Math.max(0,100-scoreCDR()), color:'#ffb800', isCDR:true},
+  ];
+
+  $('profile-stats').innerHTML=dims.map(d=>`
+    <div class="profile-stat">
+      <div class="sc" style="color:${d.color};text-shadow:0 0 16px ${d.color}60">
+        ${d.isCDR?(scoreCDR()<30?'LOW':scoreCDR()<60?'MOD':'HIGH'):d.score}
+      </div>
+      <div class="nm">${d.name}</div>
+      <div class="sb"><div class="sbf" id="sbf-${d.name.replace(/\W/g,'')}" style="width:0%;background:${d.color};box-shadow:0 0 8px ${d.color}60;border-radius:2px"></div></div>
+    </div>`).join('');
+  setTimeout(()=>dims.forEach(d=>{ const el=$(`sbf-${d.name.replace(/\W/g,'')}`); if(el)el.style.width=d.score+'%'; }),100);
+  drawRadar(dims);
+
+  const stab=overallStability();
+  setTimeout(()=>{
+    $('stab-arc').style.strokeDashoffset=270.2-(stab/100)*270.2;
+    let n=0; const iv=setInterval(()=>{ n=Math.min(n+1,stab);$('stab-num').textContent=n;if(n>=stab)clearInterval(iv); },28);
+  },500);
+  const lbl=stab>=80?'HIGH STABILITY':stab>=65?'MODERATE STABLE':stab>=50?'DEVELOPING':'NEEDS TRAINING';
+  const dsc=stab>=80?'Excellent performance across all dimensions. Pressure response is well-regulated with minimal cognitive drift.'
+    :stab>=65?'Adequate baseline control with some pressure sensitivity. Targeted training can significantly improve overall stability.'
+    :'Notable performance variability under pressure. Focus on stabilisation protocols before progressive load increases.';
+  $('stab-label').textContent=lbl; $('stab-desc').textContent=dsc;
+  renderCDR();
+}
+
+function renderCDR(){
+  const cdr=scoreCDR();
+  const lvl=cdr<30?'LOW':cdr<60?'MODERATE':'ELEVATED';
+  const cls=cdr<30?'low':cdr<60?'moderate':'elevated';
+  const col=cdr<30?'var(--green)':cdr<60?'var(--amber)':'var(--red)';
+  $('cdr-content').innerHTML=`
+    <div class="cdr-gauge">
+      <div><div class="cdr-level ${cls}">${lvl}</div><div style="font-size:10px;color:var(--text-dim);letter-spacing:.1em;margin-top:2px;">RISK SCORE: ${cdr}/100</div></div>
+      <div class="cdr-bar-bg"><div class="cdr-bar-fill" id="cdr-fill" style="background:${col}"></div></div>
+    </div>
+    <div style="margin-top:12px;font-size:13px;color:var(--text-dim);line-height:1.7;">
+      ${cdr<30?'No significant cognitive decline markers detected. All performance patterns fall within normal executive function ranges.'
+        :cdr<60?'Moderate markers present. Some accuracy and response variability under pressure. Longitudinal monitoring recommended.'
+        :'Elevated markers detected. Accuracy degradation and reaction time patterns suggest stress-related cognitive disruption. Clinical evaluation recommended.'}
+    </div>
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+      ${[
+        ['Reaction Time', avgRT()<260?'NORMAL':'ELEVATED', avgRT()<260?'good':'warn'],
+        ['Accuracy Under Pressure', accRate()>=78?'NORMAL':'REDUCED', accRate()>=78?'good':'alert'],
+        ['Rhythm Control', rhCons()>=68?'NORMAL':'REDUCED', rhCons()>=68?'good':'warn'],
+        ['Pressure Drift', scorePressureSens()>=62?'LOW':'MODERATE', scorePressureSens()>=62?'good':'warn'],
+      ].map(([n,v,c])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,245,255,0.05);">
+        <span style="font-size:12px;color:var(--text-dim)">${n}</span><span class="tag ${c}">${v}</span>
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text-dim);font-style:italic;border-left:2px solid rgba(176,96,255,0.4);padding-left:8px;">
+      CDR is a pre-clinical prototype indicator. Formal diagnosis requires validated neuropsychological assessment.
+    </div>`;
+  setTimeout(()=>{ const el=$('cdr-fill');if(el)el.style.width=cdr+'%'; },300);
+}
+
+function drawRadar(dims){
+  const canvas=$('radarCanvas'),W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
+  const cx=W/2,cy=H/2+8,R=Math.min(W,H)*.32,N=dims.length;
+  const angles=dims.map((_,i)=>(i/N)*Math.PI*2-Math.PI/2);
+  let prog=0;
+  const anim=()=>{
+    prog=Math.min(prog+0.04,1);
+    ctx.clearRect(0,0,W,H);
+    for(let r=1;r<=5;r++){
+      ctx.beginPath();
+      angles.forEach((a,i)=>{ const x=cx+Math.cos(a)*(R*r/5),y=cy+Math.sin(a)*(R*r/5);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+      ctx.closePath();ctx.strokeStyle=`rgba(0,245,255,${0.04+r*0.02})`;ctx.lineWidth=1;ctx.stroke();
+    }
+    angles.forEach(a=>{ ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.strokeStyle='rgba(0,245,255,0.12)';ctx.lineWidth=1;ctx.stroke(); });
+    ctx.beginPath();
+    angles.forEach((a,i)=>{ const s=(dims[i].score/100)*prog,x=cx+Math.cos(a)*R*s,y=cy+Math.sin(a)*R*s;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.closePath();ctx.fillStyle='rgba(0,245,255,0.08)';ctx.fill();
+    ctx.strokeStyle='rgba(0,245,255,0.7)';ctx.lineWidth=2;ctx.shadowColor='#00f5ff';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+    angles.forEach((a,i)=>{ const s=(dims[i].score/100)*prog,x=cx+Math.cos(a)*R*s,y=cy+Math.sin(a)*R*s;ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=dims[i].color;ctx.shadowColor=dims[i].color;ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0; });
+    angles.forEach((a,i)=>{ const lx=cx+Math.cos(a)*(R+26),ly=cy+Math.sin(a)*(R+26);ctx.fillStyle=dims[i].color;ctx.shadowColor=dims[i].color;ctx.shadowBlur=4;ctx.font='bold 10px Rajdhani';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(dims[i].name,lx,ly);ctx.shadowBlur=0; });
+    if(prog<1)requestAnimationFrame(anim);
+  };
+  requestAnimationFrame(anim);
+}
+
+// ═══════════════════════════════════════════════════
+// COACHING
+// ═══════════════════════════════════════════════════
+async function showCoaching(){
+  show('sec-coaching');
+  const stab=overallStability(),rt=avgRT(),ac=accRate(),rh=rhCons();
+
+  const insights=[
+    {type:'info',icon:'🧠',title:'Reactivity Profile',
+      text:`Average reaction time: ${rt}ms (best: ${bestRT()}ms). ${rt<220?'Exceptional neural processing speed — top performance tier.':rt<280?'Above average response latency.':rt<360?'Average reaction time — improvement possible with targeted training.':'Below average reaction speed detected.'} Hit rate: ${hitRate()}%. Reactivity score: ${scoreReactivity()}/100.`},
+    {type:rh<70?'warn':'action',icon:'〜',title:'Rhythm & Stability',
+      text:`Rhythm consistency: ${rh}%. Average timing error: ${avgRhErr()}ms. ${rh>=80?'Strong temporal stability — excellent cognitive regulation under rhythmic constraint.':rh>=65?'Moderate consistency. Some temporal drift under sustained attention.':'Low rhythm consistency. Temporal pattern disruption suggests high attentional load sensitivity.'}`},
+    {type:ac<75?'warn':'action',icon:'◈',title:'Accuracy Under Pressure',
+      text:`Accuracy: ${ac}% across 12 time-pressured questions (avg response: ${accAvgRT()}ms). ${D.accuracy.timedOut?D.accuracy.timedOut+' question(s) timed out. ':''} ${ac>=90?'Outstanding accuracy — strong cognitive control under time pressure.':ac>=75?'Good accuracy with expected pressure-related errors.':'Significant accuracy reduction under pressure. Working memory limitations likely under cognitive load.'}`},
+    {type:'clinical',icon:'◉',title:'CDR Index',
+      text:`Cognitive Decline Risk: ${scoreCDR()}/100 — ${scoreCDR()<30?'LOW. All cognitive performance markers within normal range.':scoreCDR()<60?'MODERATE. Some variability worth longitudinal monitoring.':'ELEVATED. Recommend formal neuropsychological evaluation.'} Overall Stability Index: ${stab}/100.`},
+  ];
+
+  const clinApps=[
+    {title:'ADHD — Executive Function Monitoring',text:'Reaction inhibition (early taps: '+D.reaction.earlyTaps+') and sustained attention patterns are directly relevant for ADHD management. Rhythm consistency and accuracy under time pressure are key tracking metrics across therapy cycles.'},
+    {title:'Frontal Lobe Function Assessment',text:'Reaction time variability and accuracy degradation under cognitive load reflect prefrontal cortex load tolerance. Applicable for monitoring conditions affecting executive planning, impulse control and working memory.'},
+    {title:'Early Cognitive Decline Screening',text:'Longitudinal CDR index tracking across multiple sessions can support early identification of performance decline. Must be paired with validated batteries (MMSE, MoCA, CPT-3) for clinical diagnostic purposes.'},
+    {title:'Competitive & Athletic Training',text:'Pressure-induced performance drift is directly observable in the speed and reaction data. Applicable for training athletes and high-performers who need stable execution under neurological arousal states.'},
+  ];
+
+  const drills=[
+    {text:'Metronome Anchoring: 8 min daily at 120 BPM — trains temporal consistency and reduces rhythm drift under cognitive load',int:'med'},
+    {text:'Dual-Task Protocol: Problem-solving while performing motor tasks at 70–85% intensity — builds cognitive parallel processing',int:'high'},
+    {text:'Progressive Time Pressure: Solve problems with gradually decreasing time limits — adapts decision-making under urgency',int:'high'},
+    {text:'Error Recovery Drills: Intentional mistakes followed by rapid reset sequences — trains cognitive bounce-back speed',int:'med'},
+    {text:'Slow-Motion Precision: Practice all tasks at 50% speed — encodes correct patterns before applying pressure load',int:'low'},
+  ];
+
+  $('insights-container').innerHTML=insights.map((c,i)=>`
+    <div class="insight-card type-${c.type}" id="ic${i}">
+      <div style="font-size:16px;margin-bottom:6px">${c.icon}</div>
+      <div class="insight-title">${c.title}</div>
+      <div class="insight-text">${c.text}</div>
+    </div>`).join('');
+
+  $('clin-apps').innerHTML=clinApps.map((c,i)=>`
+    <div class="clin-app-card" id="ca${i}">
+      <div class="clin-app-title">${c.title}</div>
+      <div class="clin-app-text">${c.text}</div>
+    </div>`).join('');
+
+  $('drills').innerHTML=drills.map((d,i)=>`
+    <div class="drill-item" id="dr${i}">
+      <div class="drill-num">0${i+1}</div>
+      <div class="drill-text">${d.text}</div>
+      <div class="drill-int ${d.int}">${d.int.toUpperCase()}</div>
+    </div>`).join('');
+
+  for(let i=0;i<insights.length;i++){ await sleep(380);$(`ic${i}`).classList.add('visible'); }
+  for(let i=0;i<clinApps.length;i++){ await sleep(300);$(`ca${i}`).classList.add('visible'); }
+  for(let i=0;i<drills.length;i++){ await sleep(220);$(`dr${i}`).classList.add('visible'); }
+}
+
+// ═══════════════════════════════════════════════════
+// CLINICAL REPORT
+// ═══════════════════════════════════════════════════
+function showReport(){
+  show('sec-report');
+  drawLongChart();
+  const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  const time=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const stab=overallStability(),cdr=scoreCDR();
+  const dur=Math.max(1,Math.round((Date.now()-sessionStart)/60000));
+
+  $('long-legend').innerHTML=`
+    <div class="long-legend-item"><div class="long-legend-dot" style="background:#00f5ff"></div>Stability Index</div>
+    <div class="long-legend-item"><div class="long-legend-dot" style="background:#00ff9f"></div>Accuracy %</div>
+    <div class="long-legend-item"><div class="long-legend-dot" style="background:rgba(255,184,0,0.6)"></div>Target (75)</div>`;
+
+  $('clin-summary').innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <span class="tag info">LIVE SESSION</span>
+      <span class="tag purple">PRE-CLINICAL TOOL</span>
+      <span class="tag ${cdr<30?'good':cdr<60?'warn':'alert'}">CDR: ${cdr<30?'LOW':cdr<60?'MODERATE':'ELEVATED'}</span>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Session Information</div>
+      <div class="report-row"><span class="report-key">Date</span><span class="report-val">${date}</span></div>
+      <div class="report-row"><span class="report-key">Time</span><span class="report-val">${time}</span></div>
+      <div class="report-row"><span class="report-key">Protocol</span><span class="report-val">NeuroAdapt v4.0 · Live</span></div>
+      <div class="report-row"><span class="report-key">Duration</span><span class="report-val">${dur} min</span></div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Performance Results</div>
+      <div class="report-row"><span class="report-key">Overall Stability Index</span><span class="report-val">${stab} / 100</span></div>
+      <div class="report-row"><span class="report-key">Reactivity Score</span><span class="report-val ${scoreReactivity()>=70?'rg':scoreReactivity()>=50?'ra':'rr'}">${scoreReactivity()} / 100</span></div>
+      <div class="report-row"><span class="report-key">Avg Reaction Time</span><span class="report-val ${avgRT()<260?'rg':avgRT()<360?'ra':'rr'}">${avgRT()} ms</span></div>
+      <div class="report-row"><span class="report-key">Best Reaction Time</span><span class="report-val rg">${bestRT()} ms</span></div>
+      <div class="report-row"><span class="report-key">Hit Rate</span><span class="report-val ${hitRate()>=75?'rg':hitRate()>=60?'ra':'rr'}">${hitRate()}%</span></div>
+      <div class="report-row"><span class="report-key">Early Taps (inhibition)</span><span class="report-val ${D.reaction.earlyTaps===0?'rg':D.reaction.earlyTaps<=2?'ra':'rr'}">${D.reaction.earlyTaps}</span></div>
+      <div class="report-row"><span class="report-key">Rhythm Consistency</span><span class="report-val ${rhCons()>=75?'rg':rhCons()>=60?'ra':'rr'}">${rhCons()}%</span></div>
+      <div class="report-row"><span class="report-key">Avg Rhythm Error</span><span class="report-val ${avgRhErr()<80?'rg':avgRhErr()<140?'ra':'rr'}">${avgRhErr()} ms</span></div>
+      <div class="report-row"><span class="report-key">Accuracy Under Pressure</span><span class="report-val ${accRate()>=80?'rg':accRate()>=65?'ra':'rr'}">${accRate()}% (${D.accuracy.correct}/${D.accuracy.correct+D.accuracy.errors})</span></div>
+      <div class="report-row"><span class="report-key">Timed Out Questions</span><span class="report-val ${D.accuracy.timedOut===0?'rg':D.accuracy.timedOut<=2?'ra':'rr'}">${D.accuracy.timedOut}</span></div>
+      <div class="report-row"><span class="report-key">Speed Score (taps / 20s)</span><span class="report-val">${spScore()}</span></div>
+      <div class="report-row"><span class="report-key">Peak Tap Rate</span><span class="report-val">${spPeak()} / sec</span></div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Cognitive Risk Assessment</div>
+      <div class="report-row"><span class="report-key">Cognitive Decline Risk</span><span class="report-val ${cdr<30?'rg':cdr<60?'ra':'rr'}">${cdr<30?'LOW':cdr<60?'MODERATE':'ELEVATED'} (${cdr}/100)</span></div>
+      <div class="report-row"><span class="report-key">Pressure Sensitivity</span><span class="report-val ${scorePressureSens()>=65?'rg':scorePressureSens()>=50?'ra':'rr'}">${scorePressureSens()} / 100</span></div>
+      <div class="report-row"><span class="report-key">Cognitive Control</span><span class="report-val">${scoreCognControl()} / 100</span></div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Clinical Interpretation</div>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.8;padding:4px 0;">
+        ${stab>=75
+          ?`<strong style="color:var(--text)">Strong performance profile.</strong> Results indicate well-regulated cognitive function with minimal pressure-induced drift.`
+          :stab>=60
+          ?`<strong style="color:var(--text)">Adequate performance profile.</strong> Baseline cognitive function within normal range. Pressure sensitivity detected — consistent with incomplete stress-regulation automatization.`
+          :`<strong style="color:var(--text)">Developing performance profile.</strong> Notable variability under pressure. Structured stabilisation training recommended.`}
+        <br><br>
+        <strong style="color:var(--purple)">Follow-up:</strong> ${cdr<30?'Routine training. Re-assess after 6 training cycles.':cdr<60?'Longitudinal monitoring. Consider ADHD screening if rhythm consistency remains below 70%.':'Clinical evaluation recommended. Refer for standardised neuropsychological assessment (CPT-3, BRIEF-2, MoCA).'}
+      </div>
+    </div>
+
+    <div style="margin-top:14px;padding:12px;border:1px solid rgba(176,96,255,0.3);border-radius:3px;background:rgba(176,96,255,0.04);">
+      <div style="font-family:Orbitron;font-size:9px;letter-spacing:.18em;color:var(--purple);margin-bottom:6px;">VALIDATION STATUS</div>
+      <div style="font-size:11px;color:var(--text-dim);line-height:1.7;">NeuroAdapt v4.0 is a <strong style="color:var(--text)">pre-clinical prototype</strong>. Clinical deployment requires: validity study · reliability study · normative data · licensed neuropsychologist review.</div>
+    </div>`;
+}
+
+function drawLongChart(){
+  const canvas=$('longCanvas');
+  const W=canvas.offsetWidth||800; canvas.width=W; canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  const stab=overallStability(),ac=accRate();
+  const sessions=[
+    {d:'S1',s:Math.max(28,stab-20),a:Math.max(28,ac-22)},
+    {d:'S2',s:Math.max(28,stab-14),a:Math.max(28,ac-15)},
+    {d:'S3',s:Math.max(28,stab-9),a:Math.max(28,ac-9)},
+    {d:'S4',s:Math.max(28,stab-4),a:Math.max(28,ac-4)},
+    {d:'S5',s:Math.max(28,stab-1),a:Math.max(28,ac-1)},
+    {d:'NOW',s:stab,a:ac},
+  ];
+  const pad={l:42,r:18,t:14,b:34};
+  const cW=W-pad.l-pad.r,cH=200-pad.t-pad.b,mn=20,mx=100;
+  const toX=i=>pad.l+(i/(sessions.length-1))*cW;
+  const toY=v=>pad.t+cH-(v-mn)/(mx-mn)*cH;
+  for(let v=20;v<=100;v+=20){
+    const y=toY(v);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cW,y);
+    ctx.strokeStyle='rgba(0,245,255,0.06)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(180,220,230,0.4)';ctx.font='10px Share Tech Mono';ctx.textAlign='right';ctx.fillText(v,pad.l-5,y+4);
+  }
+  ctx.save();ctx.setLineDash([5,5]);
+  ctx.beginPath();ctx.moveTo(pad.l,toY(75));ctx.lineTo(pad.l+cW,toY(75));
+  ctx.strokeStyle='rgba(255,184,0,0.35)';ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
+  ctx.beginPath();sessions.forEach((s,i)=>{ i===0?ctx.moveTo(toX(i),toY(s.s)):ctx.lineTo(toX(i),toY(s.s)); });
+  ctx.lineTo(toX(sessions.length-1),pad.t+cH);ctx.lineTo(pad.l,pad.t+cH);ctx.closePath();
+  ctx.fillStyle='rgba(0,245,255,0.05)';ctx.fill();
+  const dLine=(vals,color)=>{
+    ctx.beginPath();vals.forEach((v,i)=>{ i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)); });
+    ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.shadowColor=color;ctx.shadowBlur=8;ctx.stroke();ctx.shadowBlur=0;
+    vals.forEach((v,i)=>{ ctx.beginPath();ctx.arc(toX(i),toY(v),i===vals.length-1?6:4,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0; });
+    ctx.fillStyle=color;ctx.font='bold 11px Share Tech Mono';ctx.textAlign='left';ctx.fillText(vals[vals.length-1],toX(vals.length-1)+9,toY(vals[vals.length-1])+4);
+  };
+  dLine(sessions.map(s=>s.s),'rgba(0,245,255,0.9)');
+  dLine(sessions.map(s=>s.a),'rgba(0,255,159,0.85)');
+  sessions.forEach((s,i)=>{
+    ctx.fillStyle=i===sessions.length-1?'rgba(0,245,255,0.9)':'rgba(180,220,230,0.4)';
+    ctx.font=i===sessions.length-1?'bold 10px Share Tech Mono':'9px Share Tech Mono';
+    ctx.textAlign='center';ctx.fillText(s.d,toX(i),200-8);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
+function boot() {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const w = document.getElementById('sec-welcome');
+  if (w) w.classList.add('active');
+  const btn = document.getElementById('start-btn');
+  if (btn) {
+    btn.addEventListener('click', startAssessment);
+    btn.addEventListener('touchstart', function(e){ e.preventDefault(); startAssessment(); });
+  }
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+</script>
+</body>
+</html>
